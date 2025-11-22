@@ -170,3 +170,69 @@ sudo ufw allow 443/tcp
 - **Automate start**: ensure your Next.js `systemd` service (`scripts/rio-coffee.service`) is configured and enabled so the app is running after reboot. The proxy will route traffic to it on port 3000.
 
 If you'd rather host on Vercel, Cloudflare, or another hosting provider, follow their docs to connect the `riocoffee.in` domain (they typically ask you to add an `A` or `CNAME` record and verify ownership). Vercel also gives built-in HTTPS.
+
+## Quick-start automated server setup (Ubuntu/Debian)
+
+To set up the entire server (Nginx, certbot, HTTPS, firewall) in one command:
+
+1. **On your server**: clone the repo or download the script:
+   ```bash
+   # If you cloned the repo:
+   cd /path/to/rio-coffee
+   # Otherwise, copy scripts/setup-server.sh to your server
+   ```
+
+2. **Ensure the Next.js app is running on port 3000** (via systemd or `npx next start -p 3000`).
+
+3. **Run the setup script** (requires sudo):
+   ```bash
+   sudo chmod +x scripts/setup-server.sh
+   sudo ./scripts/setup-server.sh
+   ```
+
+   This script will:
+   - Verify the app is running on port 3000
+   - Update system packages
+   - Install Nginx and certbot
+   - Configure Nginx as a reverse proxy for `riocoffee.in` and `www.riocoffee.in`
+   - Obtain a free Let's Encrypt TLS certificate
+   - Open firewall ports 80 and 443 (UFW)
+   - Enable auto-renewal of certificates
+   - Start/reload Nginx
+
+4. **Verify DNS**: ensure your DNS A records for `riocoffee.in` and `www.riocoffee.in` point to your server's public IP.
+
+5. **Test**:
+   ```bash
+   curl https://riocoffee.in
+   ```
+
+That's it! Your site is now publicly accessible over HTTPS at `https://riocoffee.in` and `https://www.riocoffee.in`.
+
+## Troubleshooting domain setup
+
+- **"Port 3000 is not listening"**: Start the Next.js app. Example:
+  ```bash
+  cd /path/to/rio-coffee
+  npm run build
+  npx next start -p 3000 &
+  # or use systemd: sudo systemctl start rio-coffee
+  ```
+
+- **Nginx config test fails**: Check `/etc/nginx/sites-available/riocoffee` for syntax errors.
+
+- **Certificate not obtained**: Check that port 80 is open and DNS is propagated. Run manually:
+  ```bash
+  sudo certbot certonly --nginx -d riocoffee.in -d www.riocoffee.in
+  ```
+
+- **HTTPS not working**: 
+  - Verify firewall allows 443: `sudo ufw status`
+  - Check Nginx is running: `sudo systemctl status nginx`
+  - Check Nginx logs: `sudo tail -f /var/log/nginx/error.log`
+  - Verify certs exist: `sudo certbot certificates`
+
+- **Certificate renewal issues**: Certbot auto-renewal is configured. To manually renew:
+  ```bash
+  sudo certbot renew
+  ```
