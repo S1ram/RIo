@@ -98,3 +98,75 @@ sudo ufw allow 3000/tcp
 ```
 
 Replace `/path/to/rio-coffee` in the service file with the correct path for your machine.
+
+**Domain Setup (riocoffee.in)**
+
+Follow these steps to make `riocoffee.in` point to this site (assumes you have a server with a public IP and control of the domain DNS):
+
+- **DNS**: In your domain registrar/DNS provider, create one of the following records:
+  - If you are serving from a single server: create an `A` record for `@` (root) and `www` pointing to your server's public IP.
+  - If using a platform (Vercel/Cloudflare Pages/etc): add the required `CNAME` or provider-specific records per their docs.
+
+- **Reverse proxy (recommended)**: Run your Next.js app with `npm run build` + `npx next start -p 3000`, and put Nginx in front to proxy HTTP/HTTPS traffic to `localhost:3000`.
+
+- **Example Nginx**: place the example config below under `/etc/nginx/sites-available/riocoffee` and symlink to `sites-enabled` (or use your distro's layout). Then reload Nginx.
+
+```nginx
+# scripts/nginx-rio-coffee.conf (example)
+server {
+	listen 80;
+	server_name riocoffee.in www.riocoffee.in;
+
+	# Redirect HTTP to HTTPS (certbot will create HTTPS block)
+	location / {
+		return 301 https://$host$request_uri;
+	}
+}
+
+server {
+	listen 443 ssl;
+	server_name riocoffee.in www.riocoffee.in;
+
+	# change these to your cert paths or use certbot
+	ssl_certificate /etc/letsencrypt/live/riocoffee.in/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/riocoffee.in/privkey.pem;
+
+	# Recommended security headers (adjust as needed)
+	add_header X-Frame-Options SAMEORIGIN;
+	add_header X-Content-Type-Options nosniff;
+	add_header Referrer-Policy no-referrer-when-downgrade;
+
+	location / {
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_pass http://127.0.0.1:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "";
+		proxy_buffering off;
+	}
+}
+```
+
+- **TLS (Let's Encrypt)**: on the server install `certbot` and run the following once Nginx is listening on port 80 to obtain certificates:
+
+```bash
+# Example (Ubuntu):
+sudo apt update
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d riocoffee.in -d www.riocoffee.in
+```
+
+Certbot will edit your Nginx config to use the certs and configure automatic renewal.
+
+- **Firewall**: allow ports 80 and 443 (example for UFW):
+
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+```
+
+- **Automate start**: ensure your Next.js `systemd` service (`scripts/rio-coffee.service`) is configured and enabled so the app is running after reboot. The proxy will route traffic to it on port 3000.
+
+If you'd rather host on Vercel, Cloudflare, or another hosting provider, follow their docs to connect the `riocoffee.in` domain (they typically ask you to add an `A` or `CNAME` record and verify ownership). Vercel also gives built-in HTTPS.
