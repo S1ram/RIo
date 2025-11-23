@@ -2,6 +2,8 @@
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
+🚀 **Quick Deploy to AWS EC2**: See [`scripts/aws-ec2-deploy.md`](scripts/aws-ec2-deploy.md) for a complete guide to deploy to AWS and access via `riocoffee.in`.
+
 ## Getting Started
 
 First, run the development server:
