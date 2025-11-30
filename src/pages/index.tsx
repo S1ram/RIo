@@ -11,7 +11,7 @@ export default function Home() {
         {/* Hero Background */}
         <div className="absolute inset-0">
           <Image
-            src="/images/hero-coffee.jpg"
+            src="/images/rio-logo-bg.jpg"
             alt="Fresh brewed coffee"
             fill
             className="object-cover"
