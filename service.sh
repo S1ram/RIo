@@ -9,8 +9,8 @@ cd $APP_DIR || exit
 
 case "$1" in
   start)
-    echo "👉 Installing dependencies..."
-    sudo npm install
+   # echo "👉 Installing dependencies..."
+   # sudo npm install
 
     echo "👉 Building Next.js app..."
     npm run build

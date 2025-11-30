@@ -24,8 +24,6 @@ export default function Home() {
         <div className="relative flex h-full items-center justify-center">
           <div className="text-center text-white">
             <h1 className="mb-6 text-5xl font-bold leading-tight sm:text-6xl">
-              Rio Coffee 
-                      — Where every sip sparks clarity.
             </h1>
             <p className="mb-8 text-xl">
               Premium Brazilian Coffee, Crafted with Passion Since 2020
